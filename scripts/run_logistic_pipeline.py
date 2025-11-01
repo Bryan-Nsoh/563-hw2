@@ -2,7 +2,13 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_PATH = PROJECT_ROOT / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
 
 import numpy as np
 
@@ -16,7 +22,6 @@ from stat563_hw2.logistic import (
     wald_mean_ci,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DATA = PROJECT_ROOT / "outputs" / "data"
 OUTPUT_FIGURES = PROJECT_ROOT / "outputs" / "figures"
 

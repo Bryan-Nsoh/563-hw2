@@ -5,6 +5,13 @@ import json
 from pathlib import Path
 from typing import Tuple
 
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_PATH = PROJECT_ROOT / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import toeplitz
@@ -14,7 +21,6 @@ from stat563_hw2.correlation import (
     bootstrap_correlation_vectors,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DATA = PROJECT_ROOT / "outputs" / "data"
 OUTPUT_FIGURES = PROJECT_ROOT / "outputs" / "figures"
 
