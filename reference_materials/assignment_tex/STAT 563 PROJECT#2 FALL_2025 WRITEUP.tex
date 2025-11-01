@@ -1,0 +1,240 @@
+%% LyX 2.4.3 created this file.  For more info, see https://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass{article}
+\usepackage[latin9]{inputenc}
+\usepackage{color}
+\usepackage{booktabs}
+\usepackage{amsmath}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+\makeatother
+
+\begin{document}
+\title{\textcolor{red}{STAT 563 LAB PROJECT\#2}}
+\author{Prof. H. Bozdogan\\
+Fall 2025\\
+Due November 7, 2025}
+\maketitle
+
+\section*{\textcolor{blue}{Instructions:} }
+\begin{itemize}
+\item \textbf{SHOW ALL YOUR WORK ON SEPARATE PAGES FOR EACH PROBLEM. Please
+submit your write up with the source and pdf with computational modules
+and all your graphs. If you are typing your results in LyX or Latex.
+You can zip your files and submit your work by uploading to CANVAS
+under your NAME\_LASTNAME\_STAT563\_PROJ\#1\_FALL\_2025.}
+\item \textbf{You can use MATLAB, R, or Python computational platform of
+your choice.}
+\end{itemize}
+
+\section*{\textcolor{red}{Overview}}
+
+This project integrates large-sample theory, likelihood-based inference,
+and resampling techniques in modern computational statistics. You
+will: 
+\begin{itemize}
+\item Examine the logistic distribution and its importance in statistical
+modeling and machine learning. 
+\item Compute confidence intervals based on Fisher information
+\item Explore bootstrapping and the distribution of correlation matrices, 
+\item Implement slice sampling for correlation uncertainty. 
+\end{itemize}
+
+\subsection*{Q1 Visualization and Interpretation of the Logistic Distribution}
+
+Consider the logistic density given by 
+\[
+f(x\mid\mu,s)=\frac{\exp\!\left(-\frac{x-\mu}{s}\right)}{s\left(1+\exp\!\left(-\frac{x-\mu}{s}\right)\right)^{2}},\quad x\in\mathbb{R}.
+\]
+
+
+\paragraph{(a) Plotting.}
+
+Plot $f(x\mid\mu,s)$ for several parameter settings: 
+\begin{itemize}
+\item $\mu=0$ with $s=0.5,1,2$ to study the effect of scale. 
+\item $s=1$ with $\mu=-2,0,2$ to study the effect of location. 
+\end{itemize}
+Overlay these curves on the same axes with a clear legend and color
+scheme.
+
+\paragraph{(b) Interpretation.}
+\begin{itemize}
+\item The location parameter $\mu$ shifts the curve horizontally, serving
+as both mean and median. 
+\item The scale parameter $s$ controls spread: larger $s$ produces heavier
+tails and flatter curvature. 
+\item The variance of logistic distribution is $\mathrm{Var}(X)=\sigma^{2}=\pi^{2}s^{2}/3$. 
+\end{itemize}
+
+\paragraph{(c) Comparison with the Normal Distribution.}
+
+Overlay $f(x\mid0,1)$ with the standard normal $\mathcal{N}(0,1)$.
+Discuss how the logistic distribution has heavier tails, offering
+more robustness to outliers.
+
+\paragraph{(d) Discuss the importance in Statistics and Machine Learning.}
+\begin{itemize}
+\item The \textbf{logistic CDF} 
+\[
+F(x\mid\mu,s)=\frac{1}{1+\exp\!\left(-\frac{x-\mu}{s}\right)}
+\]
+defines the canonical \emph{logit link} in generalized linear models. 
+\item In \textbf{logistic regression}, this CDF maps linear predictors to
+probabilities in $(0,1)$. 
+\item The heavier tails make logistic likelihoods more robust than Gaussian
+ones. 
+\item In \textbf{machine learning}, logistic loss (cross-entropy) and the
+softmax generalization underpin neural classification models. 
+\end{itemize}
+
+\subsection*{Q2 Find the MLEs}
+
+Given observations $x_{1},\ldots,x_{n}$, the likelihood function
+is 
+\[
+L(\mu,s)=s^{-n}\prod_{i=1}^{n}\frac{\exp\!\left(-\frac{x_{i}-\mu}{s}\right)}{\left(1+\exp\!\left(-\frac{x_{i}-\mu}{s}\right)\right)^{2}}.
+\]
+and taking logarithms we have the log-likelihood
+\[
+\ell(\mu,s)=-n\log s-\frac{1}{s}\sum_{i=1}^{n}(x_{i}-\mu)-2\sum_{i=1}^{n}\log\!\left(1+\exp\!\left(-\frac{x_{i}-\mu}{s}\right)\right).
+\]
+
+Let $z_{i}=(x_{i}-\mu)/s$, we obtain the score equations:
+
+\[
+\frac{\partial\ell}{\partial\mu}=\frac{1}{s}\sum_{i=1}^{n}\tanh\!\left(\frac{z_{i}}{2}\right),
+\]
+
+\[
+\frac{\partial\ell}{\partial s}=-\frac{n}{s}+\frac{1}{s^{2}}\sum_{i=1}^{n}(x_{i}-\mu)-\frac{2}{s^{2}}\sum_{i=1}^{n}(x_{i}-\mu)\frac{e^{-z_{i}}}{1+e^{-z_{i}}}.
+\]
+
+So, the score vector is:
+
+\[
+S=\left(\begin{array}{c}
+\frac{\partial\ell}{\partial\mu}\\
+\frac{\partial\ell}{\partial s}
+\end{array}\right)=\left(\begin{array}{c}
+\frac{1}{s}\sum_{i=1}^{n}\tanh\!\left(\frac{z_{i}}{2}\right)\\
+-\frac{n}{s}+\frac{1}{s^{2}}\sum_{i=1}^{n}(x_{i}-\mu)-\frac{2}{s^{2}}\sum_{i=1}^{n}(x_{i}-\mu)\frac{e^{-z_{i}}}{1+e^{-z_{i}}}
+\end{array}\right)
+\]
+
+
+\paragraph{(a) Show that the MLEs $(\hat{\mu},\hat{s})$ are: 
+\[
+\sum_{i=1}^{n}\tanh\!\left(\frac{X_{i}-\hat{\mu}}{2\hat{s}}\right)=0,\qquad\hat{s}=\frac{1}{n}\sum_{i=1}^{n}|X_{i}-\hat{\mu}|\,w_{i}.
+\]
+}
+
+\paragraph{(b) Fisher information}
+
+Taking the second partial derivative, the observed information at
+$(\hat{\mu},\hat{s})$ is: 
+\[
+\mathcal{F}_{\mathrm{obs}}(\hat{\mu},\hat{s})=-\nabla^{2}\ell(\hat{\mu},\hat{s})=-\mathcal{H}(\hat{\mu},\hat{s}).
+\]
+The expected Fisher information (\textbf{per observation}) is 
+\[
+\mathcal{F}(\mu,s)=\begin{pmatrix}\dfrac{1}{3s^{2}} & 0\\[0.8em]
+0 & \dfrac{1}{s^{2}}\!\Big(\dfrac{\pi^{2}}{3}-1\Big)
+\end{pmatrix},\qquad\mathcal{F}_{n}(\mu,s)=n\,\mathcal{F}(\mu,s).
+\]
+Generate random numbers from logistic distribution of sample size
+$n=200$ observations and write a Fisher scoring iterative algorithm
+in Matlab, R, or Python to find the MLEs and estimate the parameters
+$(\mu,s)$ of the logistic distribution.
+
+\paragraph{(c) Large-sample Wald intervals}
+
+By inverting $\mathcal{F}_{\mathrm{obs}}$ or using $\mathcal{F}_{n}$
+and using the generated data in part (b), compute confidence intervals:
+
+\paragraph{
+\[
+\hat{\mu}\pm z_{\alpha/2}\sqrt{\frac{3\hat{s}^{2}}{n}},\quad\hat{s}\pm z_{\alpha/2}\hat{s}\sqrt{\frac{1}{n(\frac{\pi^{2}}{3}-1)}}.
+\]
+}
+
+\subsection*{Q3 Wald CI and percentile bootstrap CI for the mean}
+
+Using the simulate data from Q2 from part (b) compute: 
+
+(i) the Wald CI based on $\mathrm{Var}(X)=\pi^{2}s^{2}/3$ , and 
+
+(ii) a percentile bootstrap CI for the mean. 
+
+Compare shapes and widths using the Matlab module provided.
+
+\subsection*{Q4 Analytical and Bootstrap Distribution of the Correlation Matrix}
+
+Assume $\mathbf{X}_{i}=(X_{i1},\ldots,X_{id})^{\top}\sim N_{d}(\boldsymbol{\mu},\boldsymbol{\Sigma})$,
+$i=1,\ldots,n$, with correlation matrix $\mathbf{R}=\mathbf{D}^{-1/2}\boldsymbol{\Sigma}\mathbf{D}^{-1/2}$,
+where $\mathbf{D}=\operatorname{diag}(\sigma_{1}^{2},\ldots,\sigma_{d}^{2})$.
+
+\paragraph{Analytical Distribution.}
+
+The sample covariance matrix 
+\[
+\mathbf{S}=\frac{1}{n-1}\sum_{i=1}^{n}(\mathbf{X}_{i}-\bar{\mathbf{X}})(\mathbf{X}_{i}-\bar{\mathbf{X}})^{\top}
+\]
+satisfies $(n-1)\mathbf{S}\sim W_{d}(\boldsymbol{\Sigma},n-1)$, the
+Wishart distribution. The induced density of the sample correlation
+matrix $\mathbf{R}_{S}=\mathbf{D}_{S}^{-1/2}\mathbf{S}\mathbf{D}_{S}^{-1/2}$
+is (Muirhead, 1982): 
+\[
+f(\mathbf{R}_{S})\propto|\mathbf{R}_{S}|^{(n-d-2)/2}\big|\mathbf{I}_{d}-\mathbf{R}_{S}^{2}\big|^{-(n-1)/2},\quad\mathbf{R}_{S}\in\mathcal{R}_{d}.
+\]
+This is the analytical distribution of the correlation matrix.
+
+(a) Use the given Matlab module bootstrap the sample correlation matrix
+to estimate the empirical distribution $\hat{\mathbf{R}}^{*(b)}=\operatorname{corr}(\mathbf{X}^{*(b)}),\qquad b=1,\ldots,B.$
+and store these in vectorize unique correlations $\mathbf{r}^{*(b)}=\operatorname{vech}(\hat{\mathbf{R}}^{*(b)})$.
+
+(b) Which probability distribution closely approximates the distribution
+of the correlations
+
+$\mathbf{r}^{*(b)}=\operatorname{vech}(\hat{\mathbf{R}}^{*(b)})$
+as in your Project\#1.
+
+(c) Apply \textbf{slice sampling} to approximate marginal densities
+for selected $r_{jk}$.
+
+(d) Compare bootstrap-based confidence intervals with analytical Fisher-$z$
+intervals: 
+\[
+z_{jk}=\frac{1}{2}\log\!\frac{1+r_{jk}}{1-r_{jk}},\quad\text{Var}(z_{jk})\approx\frac{1}{n-3}.
+\]
+
+Discuss the geometry of uncertainty in $\mathbf{R}\in\mathbb{R}^{d\times d}$
+as revealed by the slice-sampled distribution.
+
+\subsection*{Q5 Interpret your results: Conclusion and Discussion }
+
+\section*{Grading Rubric (Total 100 points)}
+
+\begin{tabular}{llr}
+\toprule 
+\textbf{Parts} & \textbf{Description} & \textbf{Points}\tabularnewline
+\midrule 
+Q1: Visualization and Interpretation & Plots, interpretation of $\mu$, $s$, and comparison to Normal & 20\tabularnewline
+Q2: Finding MLEs & Coding and showing results & 25\tabularnewline
+Q3: Wald CI and Bootstrap (mean) & CI accuracy, and discussion & 15\tabularnewline
+Q4a: Correct simulation & Bootstrap simulation  & 5\tabularnewline
+Q4b: Approx. pdf of correlation & Fitting different distributions & 10\tabularnewline
+Q4c: Slice sampling (corr matrix) & Correct use, intervals estimates & 5\tabularnewline
+Q4d: Fisher-$z$ intervals & Interval estimates & 5\tabularnewline
+Q5: Conclusion and Discussion & Interpretation and clarity of conclusions & 10\tabularnewline
+Formatting  & Labeled plots, clear comments and explanation & 5\tabularnewline
+\midrule 
+\textbf{Total} &  & \textbf{100}\tabularnewline
+\bottomrule
+\end{tabular}
+\end{document}

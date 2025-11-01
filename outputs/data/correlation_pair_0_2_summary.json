@@ -1,0 +1,20 @@
+{
+  "pair": [
+    0,
+    2
+  ],
+  "bootstrap_ci": [
+    0.399138478636344,
+    0.5876605245237632
+  ],
+  "fisher_z_ci": [
+    0.38673176317205676,
+    0.5962025194408601
+  ],
+  "slice_ci": [
+    0.40260237885556677,
+    0.5907896556974249
+  ],
+  "bootstrap_samples_path": "outputs/data/correlation_bootstrap_vectors.npy",
+  "slice_samples_path": "outputs/data/correlation_slice_samples_pair_0_2.npy"
+}

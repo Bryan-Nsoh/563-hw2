@@ -1,0 +1,16 @@
+{
+  "sample_mean": -0.15513416590257453,
+  "wald_ci": [
+    -0.41454364672494215,
+    0.10427531491979311
+  ],
+  "wald_ci_internal": [
+    -0.41454364672494215,
+    0.10427531491979311
+  ],
+  "percentile_ci": [
+    -0.4141418773438262,
+    0.10590489974843136
+  ],
+  "bootstrap_means_path": "outputs/data/logistic_bootstrap_means.npy"
+}
