@@ -1,4 +1,4 @@
-# STAT 563 HW2 Automation
+# STAT 563 HW2
 
 Python-based workflows (managed with `uv`) for STAT 563 Project #2. It mirrors the
 original MATLAB modules and generates all figures/data needed for the final LaTeX
