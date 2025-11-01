@@ -39,6 +39,15 @@ class ReportContext:
     corr_slice_ci_high: float
     logistic_figure_relpath: Path
     correlation_figure_relpath: Path
+    boot_means_figure_relpath: Path
+    corr_fit_norm_mu: float
+    corr_fit_norm_sigma: float
+    corr_fit_norm_ks_stat: float
+    corr_fit_norm_ks_p: float
+    corr_fit_beta_alpha: float
+    corr_fit_beta_beta: float
+    corr_fit_beta_ks_stat: float
+    corr_fit_beta_ks_p: float
 
 
 def _load_context(project_root: Path) -> ReportContext:
@@ -46,6 +55,7 @@ def _load_context(project_root: Path) -> ReportContext:
     logistic_mle = json.loads((data_dir / "logistic_mle.json").read_text())
     bootstrap_summary = json.loads((data_dir / "logistic_bootstrap_summary.json").read_text())
     corr_summary = json.loads((data_dir / "correlation_pair_0_2_summary.json").read_text())
+    corr_fit = json.loads((data_dir / "correlation_fit_summary.json").read_text())
     sample = np.load(data_dir / "logistic_sample.npy")
     n = int(sample.shape[0])
 
@@ -60,6 +70,10 @@ def _load_context(project_root: Path) -> ReportContext:
     wald_mu_high = mu_hat + z * se_mu
     wald_s_low = s_hat - z * se_s
     wald_s_high = s_hat + z * se_s
+
+    logistic_fig = Path("../../figures/logistic_families.png")
+    correlation_fig = Path("../../figures/correlation_pair_0_2.png")
+    boot_means_fig = Path("../../figures/logistic_bootstrap_means.png")
 
     return ReportContext(
         sample_size=n,
@@ -84,8 +98,17 @@ def _load_context(project_root: Path) -> ReportContext:
         corr_fisher_ci_high=corr_summary["fisher_z_ci"][1],
         corr_slice_ci_low=corr_summary["slice_ci"][0],
         corr_slice_ci_high=corr_summary["slice_ci"][1],
-        logistic_figure_relpath=Path("../../figures/logistic_families.png"),
-        correlation_figure_relpath=Path("../../figures/correlation_pair_0_2.png"),
+        logistic_figure_relpath=logistic_fig,
+        correlation_figure_relpath=correlation_fig,
+        boot_means_figure_relpath=boot_means_fig,
+        corr_fit_norm_mu=corr_fit["fisher_z_normal"]["mu"],
+        corr_fit_norm_sigma=corr_fit["fisher_z_normal"]["sigma"],
+        corr_fit_norm_ks_stat=corr_fit["fisher_z_normal"]["ks_D"],
+        corr_fit_norm_ks_p=corr_fit["fisher_z_normal"]["ks_p"],
+        corr_fit_beta_alpha=corr_fit["beta_mapped"]["alpha"],
+        corr_fit_beta_beta=corr_fit["beta_mapped"]["beta"],
+        corr_fit_beta_ks_stat=corr_fit["beta_mapped"]["ks_D"],
+        corr_fit_beta_ks_p=corr_fit["beta_mapped"]["ks_p"],
     )
 
 
@@ -134,6 +157,14 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
     )
 
     corr_label = f"r_{{{ctx.corr_pair[0]+1},{ctx.corr_pair[1]+1}}}"
+    corr_norm_mu = _format_float(ctx.corr_fit_norm_mu)
+    corr_norm_sigma = _format_float(ctx.corr_fit_norm_sigma)
+    corr_norm_ks = _format_float(ctx.corr_fit_norm_ks_stat)
+    corr_norm_p = _format_float(ctx.corr_fit_norm_ks_p)
+    corr_beta_alpha = _format_float(ctx.corr_fit_beta_alpha)
+    corr_beta_beta = _format_float(ctx.corr_fit_beta_beta)
+    corr_beta_ks = _format_float(ctx.corr_fit_beta_ks_stat)
+    corr_beta_p = _format_float(ctx.corr_fit_beta_ks_p)
 
     latex = dedent(
         rf"""
@@ -152,11 +183,15 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
         \maketitle
 
         \section*{{Introduction}}
-        In this project I recreated the instructor's MATLAB workflow using Python. I ran the
-        provided pipelines so that every figure and numerical summary in this report comes
-        directly from the code in the repository. My goal is to understand how the logistic
-        distribution behaves, how Fisher scoring estimates its parameters, and how bootstrap
-        and slice sampling describe correlation uncertainty.
+        In this project I rebuilt the instructor's MATLAB workflow with Python so that every
+        figure and numerical summary is generated from reproducible scripts. The assignment
+        ties together large-sample theory, likelihood-based inference, and resampling using
+        the logistic distribution, whose CDF provides the canonical logit link, drives
+        logistic regression, and underpins cross-entropy and softmax losses in machine
+        learning. I therefore examine how the logistic density's shape responds to location
+        and scale changes, estimate the parameters with Fisher scoring, compare asymptotic
+        and bootstrap confidence intervals, and study correlation uncertainty through both
+        bootstrap resampling and slice sampling.
 
         \section{{Exploring the Logistic Distribution}}
         Figure~\ref{{fig:logistic-families}} compares logistic densities across several
@@ -174,6 +209,13 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
           \label{{fig:logistic-families}}
         \end{{figure}}
 
+        The logistic cumulative distribution translates directly into the logit link
+        $\operatorname{{logit}}(p)=\log\left(\frac{{p}}{{1-p}}\right)$, so the same curves describe how probabilities
+        respond to linear predictors in generalized linear models. Because the tails decay more
+        slowly than Gaussian tails, logistic likelihoods and the cross-entropy loss they induce
+        in classification are more forgiving of outlying observations, which is why the
+        distribution is so widely used in modern machine learning.
+
         \section{{Fisher Scoring Estimates for Logistic Parameters}}
         I simulated $n={sample_size}$ draws from $\text{{Logistic}}(0, 1)$ using the project
         pipeline and ran Fisher scoring on that sample. The algorithm converged after {ctx.iterations}
@@ -185,7 +227,10 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
         $\hat s \in \left[{wald_s_ci[0]}, {wald_s_ci[1]}\right]$.
         The location interval spans about {mu_width}, showing moderate precision, while the
         scale interval spans only {s_width}, reflecting the amount of information about spread
-        in a sample of this size.
+        in a sample of this size. The Fisher scoring updates numerically satisfy the score
+        equations $\sum_i \tanh\big((X_i-\hat\mu)/(2\hat s)\big)=0$ and the weighted-average
+        form for $\hat s$, so the algorithm recovers exactly the analytic solution implied by
+        the derivations in the project handout.
 
         \section{{Mean Confidence Intervals: Wald vs Bootstrap}}
         The sample mean was $\bar x = {sample_mean}$. The Wald interval based on
@@ -195,16 +240,27 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
         version is only slightly wider, which matches the idea that resampling captures tail
         behavior without assuming normality. The bootstrap histogram shows a near-symmetric
         distribution centered on the sample mean, so both approaches give practically the
-        same answer here.
+        same answer here. Figure~\ref{{fig:boot-means}} displays the bootstrap mean distribution with
+        both intervals marked for visual comparison.
+
+        \begin{{figure}}[ht]
+          \centering
+          \includegraphics[width=0.75\textwidth]{{{ctx.boot_means_figure_relpath}}}
+          \caption{{Bootstrap distribution of the sample mean with percentile (red dashed)
+          and Wald (blue dash-dot) interval markers, plus the sample mean (black).}}
+          \label{{fig:boot-means}}
+        \end{{figure}}
 
         \section{{Correlation Uncertainty via Bootstrap and Slice Sampling}}
         I also simulated a five-dimensional normal sample with an AR(1)-style correlation
-        structure ($n=200$) and focused on \({corr_label}\). Figure~\ref{{fig:corr-pair}} compares
-        three views of its uncertainty. The left panel shows the bootstrap distribution with
+        structure ($n=200$) and focused on \({corr_label}\). Under the Gaussian model
+        $(n-1)\mathbf{{S}}$ is Wishart, so the sample correlation matrix has the analytical
+        density described by Muirhead (1982). Figure~\ref{{fig:corr-pair}} contrasts that theory
+        with empirical diagnostics. The left panel shows the bootstrap distribution with
         percentile and Fisher-$z$ bands; they nearly coincide, suggesting the Gaussian
         approximation is adequate. The right panel shows the slice-sampled marginal density,
-        whose interval closely matches the bootstrap range, confirming the distribution is
-        roughly symmetric with slightly heavier tails than the Fisher-$z$ curve predicts.
+        whose interval closely matches the bootstrap range, confirming that the distribution is
+        roughly symmetric with only slightly heavier tails than the Fisher-$z$ curve predicts.
 
         \begin{{figure}}[ht]
           \centering
@@ -212,6 +268,15 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
           \caption{{Bootstrap and slice-sampled uncertainty for correlation ${corr_label}$.}}
           \label{{fig:corr-pair}}
         \end{{figure}}
+
+        The bootstrap draws also make it easy to revisit the Project\,#1 question of which
+        simple distribution matches the sampling variability. Fitting a Gaussian to the
+        Fisher-$z$ transform yielded $\mu = {corr_norm_mu}$ and $\sigma = {corr_norm_sigma}$ with
+        Kolmogorov--Smirnov $D={corr_norm_ks}$ and $p={corr_norm_p}$. Mapping correlations to
+        $(0,1)$ and fitting $\operatorname{{Beta}}(\alpha,\beta)$ gave $\alpha = {corr_beta_alpha}$
+        and $\beta = {corr_beta_beta}$ with $D={corr_beta_ks}$ and $p={corr_beta_p}$. Both fits are
+        acceptable, but the Beta model captures the mild skew a bit better (slightly larger
+        $p$-value), consistent with the shape seen in the histogram.
 
         Numerically, the percentile bootstrap interval was $\left[{corr_boot_ci[0]},
         {corr_boot_ci[1]}\right]$, the Fisher-$z$ interval was

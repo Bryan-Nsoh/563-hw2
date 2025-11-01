@@ -64,10 +64,29 @@ def run() -> None:
     np.save(OUTPUT_DATA / "logistic_sample.npy", sample)
     np.save(OUTPUT_DATA / "logistic_bootstrap_means.npy", bootstrap_result.bootstrap_means)
 
+    # Figure: bootstrap means histogram with CI markers
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
+    ax.hist(bootstrap_result.bootstrap_means, bins=40, density=True, color="#6aaed6", edgecolor="none")
+    ax.axvline(bootstrap_result.sample_mean, color="k", lw=1.5, label="sample mean")
+    ax.axvline(bootstrap_result.percentile_ci[0], color="r", ls="--", lw=1.2, label="bootstrap 2.5%")
+    ax.axvline(bootstrap_result.percentile_ci[1], color="r", ls="--", lw=1.2, label="bootstrap 97.5%")
+    ax.axvline(wald_ci[0], color="b", ls="-.", lw=1.2, label="Wald 2.5%")
+    ax.axvline(wald_ci[1], color="b", ls="-.", lw=1.2, label="Wald 97.5%")
+    ax.set_xlabel("Bootstrap means")
+    ax.set_ylabel("Density")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="best")
+    fig.tight_layout()
+    boot_fig = OUTPUT_FIGURES / "logistic_bootstrap_means.png"
+    fig.savefig(boot_fig)
+    plt.close(fig)
+
     print("Logistic pipeline completed:")
     print(f"  figure -> {figure_path.relative_to(PROJECT_ROOT)}")
     print("  mle -> outputs/data/logistic_mle.json")
     print("  bootstrap summary -> outputs/data/logistic_bootstrap_summary.json")
+    print("  bootstrap means fig -> outputs/figures/logistic_bootstrap_means.png")
 
 
 if __name__ == "__main__":

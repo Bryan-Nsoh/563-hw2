@@ -123,6 +123,22 @@ def run() -> None:
     print("  pair summary -> outputs/data/correlation_pair_0_2_summary.json")
     print(f"  figure -> {figure_path.relative_to(PROJECT_ROOT)}")
 
+    # Distribution fit check for r (Project #1 style): Fisher-z Normal vs mapped Beta
+    from scipy import stats as st
+    r_boot = result.bootstrap_samples
+    z = np.arctanh(np.clip(r_boot, -0.999999, 0.999999))
+    zn_mu, zn_sigma = st.norm.fit(z)
+    ks_norm = st.kstest(z, 'norm', args=(zn_mu, zn_sigma))
+    y = (np.clip(r_boot, -0.999999, 0.999999) + 1.0) / 2.0
+    a,b,loc,scale = st.beta.fit(y, floc=0.0, fscale=1.0)
+    ks_beta = st.kstest(y, 'beta', args=(a,b,0.0,1.0))
+    fit_summary = {
+        "fisher_z_normal": {"mu": float(zn_mu), "sigma": float(zn_sigma), "ks_D": float(ks_norm.statistic), "ks_p": float(ks_norm.pvalue)},
+        "beta_mapped": {"alpha": float(a), "beta": float(b), "ks_D": float(ks_beta.statistic), "ks_p": float(ks_beta.pvalue)}
+    }
+    save_json(OUTPUT_DATA / "correlation_fit_summary.json", fit_summary)
+    print("  fit summary -> outputs/data/correlation_fit_summary.json")
+
 
 if __name__ == "__main__":
     run()
