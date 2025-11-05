@@ -217,6 +217,8 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
         re-fitting the entire model, which is why the distribution is so widely used in modern
         machine learning.
 
+        \newpage
+
         \section{{Fisher Scoring Estimates for Logistic Parameters}}
         I simulated $n={sample_size}$ draws from $\text{{Logistic}}(0, 1)$ using the project
         pipeline and ran Fisher scoring on that sample. The algorithm converged after {ctx.iterations}
@@ -252,6 +254,8 @@ def _render_latex(ctx: ReportContext, author: str) -> str:
           and Wald (blue dash-dot) interval markers, plus the sample mean (black).}}
           \label{{fig:boot-means}}
         \end{{figure}}
+
+        \newpage
 
         \section{{Correlation Uncertainty via Bootstrap and Slice Sampling}}
         I also simulated a five-dimensional normal sample with an AR(1)-style correlation
